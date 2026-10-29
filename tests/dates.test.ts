@@ -19,4 +19,14 @@ describe("behavioral record dates", () => {
       datetime: "2024-01-15",
     });
   });
+
+  test("supports abbreviated month labels", () => {
+    const date = new Date("2024-12-01T00:00:00.000Z");
+
+    expect(formatBehavioralDate(date, "month", "short")).toEqual({
+      visible: "Dec 2024",
+      datetime: "2024-12",
+    });
+    expect(formatBehavioralDate(date, "year", "short").visible).toBe("2024");
+  });
 });

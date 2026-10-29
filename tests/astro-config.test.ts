@@ -2,7 +2,8 @@ import { expect, test, vi } from "vitest";
 
 import { createSitemapFilter } from "../astro.config.mjs";
 
-const githubPagesSite = "https://rdyu-cm.github.io/personal-website";
+const githubPagesSite = "https://rdyu-cm.github.io";
+const projectPagesSite = "https://example.github.io/project";
 const rootDomainSite = "https://research.example.com";
 
 const loadDefaultConfig = async () => {
@@ -17,20 +18,26 @@ const loadConfig = async (siteUrl: string) => {
   return (await import("../astro.config.mjs")).default;
 };
 
-test("defaults production builds to the GitHub Pages project URL", async () => {
+test("defaults production builds to the root GitHub Pages user site", async () => {
   const config = await loadDefaultConfig();
 
   expect(config.site).toBe(githubPagesSite);
-  expect(config.base).toBe("/personal-website");
+  expect(config.base).toBeUndefined();
   expect(config.trailingSlash).toBe("never");
 });
 
-test("derives the GitHub Pages repository base from SITE_URL", async () => {
+test("uses no base for the GitHub Pages user-site SITE_URL", async () => {
   const config = await loadConfig(githubPagesSite);
 
   expect(config.site).toBe(githubPagesSite);
-  expect(config.base).toBe("/personal-website");
+  expect(config.base).toBeUndefined();
   expect(config.trailingSlash).toBe("never");
+});
+
+test("still derives a repository base from a project-site SITE_URL", async () => {
+  const config = await loadConfig(projectPagesSite);
+
+  expect(config.base).toBe("/project");
 });
 
 test("uses no base for a root-domain SITE_URL", async () => {

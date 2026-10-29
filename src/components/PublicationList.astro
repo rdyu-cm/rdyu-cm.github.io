@@ -1,6 +1,8 @@
 ---
 import type { CollectionEntry } from "astro:content";
 
+import { profile } from "../data/profile";
+import { authorListHtml } from "../lib/authors";
 import { publicationFragmentId } from "../lib/structured-data";
 import { formatBehavioralDate } from "../lib/dates";
 import { availableExternalLinks } from "../lib/external-links";
@@ -16,6 +18,9 @@ const { publications } = Astro.props;
   {
     publications.map((publication) => {
       const links = availableExternalLinks(publication.data.links);
+      const titleHref = publication.data.links?.doi ?? links[0]?.href;
+      const showStatus =
+        publication.data.status.trim().toLowerCase() !== "published";
       const formattedDate = formatBehavioralDate(
         publication.data.date,
         publication.data.datePrecision,
@@ -24,27 +29,41 @@ const { publications } = Astro.props;
       return (
         <li id={publicationFragmentId(publication.id)} class="publication-item">
           <p class="publication-title">
-            <cite>{publication.data.title}</cite>
+            <cite>
+              {titleHref ? (
+                <a href={titleHref}>{publication.data.title}</a>
+              ) : (
+                publication.data.title
+              )}
+            </cite>
           </p>
-          <p class="publication-authors">
-            {publication.data.authors.join(", ")}
-          </p>
+          <p
+            class="publication-authors"
+            set:html={authorListHtml(
+              publication.data.authors,
+              profile.authorNames,
+            )}
+          />
           <p class="publication-meta">
             {publication.data.venue && (
               <>
-                {publication.data.venue}
+                <em>{publication.data.venue}</em>
                 <span aria-hidden="true"> · </span>
               </>
             )}
             <time datetime={formattedDate.datetime}>
               {formattedDate.visible}
             </time>
-            <span aria-hidden="true"> · </span>
-            {publication.data.status}
+            {showStatus && (
+              <>
+                <span aria-hidden="true"> · </span>
+                {publication.data.status}
+              </>
+            )}
           </p>
           {links.length > 0 && (
             <ul
-              class="publication-links"
+              class="link-chips"
               aria-label={`Links for ${publication.data.title}`}
             >
               {links.map((link) => (
@@ -68,40 +87,34 @@ const { publications } = Astro.props;
   }
 
   .publication-item + .publication-item {
-    margin-block-start: var(--space-l);
-    padding-block-start: var(--space-l);
-    border-block-start: 1px solid var(--border);
+    margin-block-start: var(--space-m);
   }
 
   .publication-title {
-    font-size: var(--step-1);
-    font-weight: 620;
-    letter-spacing: -0.012em;
-    line-height: 1.25;
+    font-weight: 640;
+    line-height: 1.35;
   }
 
   cite {
     font-style: normal;
   }
 
+  .publication-title a {
+    text-decoration: none;
+  }
+
+  .publication-title a:hover {
+    text-decoration: underline;
+  }
+
   .publication-authors {
-    margin-block-start: var(--space-2xs);
+    margin-block-start: 0.15rem;
     color: var(--ink);
+    font-size: var(--step--1);
   }
 
   .publication-meta {
-    margin-block-start: 0.15rem;
     color: var(--ink-muted);
     font-size: var(--step--1);
-  }
-
-  .publication-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs) var(--space-m);
-    margin: var(--space-s) 0 0;
-    padding: 0;
-    font-size: var(--step--1);
-    list-style: none;
   }
 </style>

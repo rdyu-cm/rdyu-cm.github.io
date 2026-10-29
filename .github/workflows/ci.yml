@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  SITE_URL: https://rdyu-cm.github.io/personal-website
+  SITE_URL: https://rdyu-cm.github.io
 
 jobs:
   verify:

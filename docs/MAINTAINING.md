@@ -1,7 +1,7 @@
 # Maintaining this site
 
 Single-page static Astro research profile deployed to GitHub Pages.
-The canonical public URL is `https://rdyu-cm.github.io/personal-website`.
+The canonical public URL is `https://rdyu-cm.github.io`.
 
 All public content renders from `/`; the only other route is the branded
 not-found page.
@@ -35,9 +35,15 @@ npm run preview -- --host 127.0.0.1
 
 ## Updating public content
 
-Routine updates belong in four content sources:
+Routine updates belong in five content sources:
 
-- `src/data/profile.ts` contains shared identity, affiliation, and contact links.
+- `src/data/profile.ts` contains shared identity, affiliation, contact links,
+  and `authorNames` (the spellings of your name that are bolded in publication
+  author lists). Each `links` entry is `{ label, href }`; a new entry such as
+  `{ label: "CV", href: "/cv.pdf" }` renders in the header automatically.
+- `src/data/news.ts` contains short dated News items (`date`, `datePrecision`,
+  `text`, and an optional `href`), shown newest first. The News section is
+  hidden when the list is empty.
 - `src/content/research/` contains one Markdown record per research appointment.
 - `src/content/publications/` contains publications and presentations.
 - `src/content/about/about.md` contains the manually authored About page.
@@ -78,15 +84,16 @@ build and verify the site, then publish `dist/` to GitHub Pages; the `deploy`
 job runs only after `verify` succeeds, so a failing check blocks publication.
 Pull requests and other branches run verification without deploying.
 
-| Setting              | Value                                                 |
-| -------------------- | ----------------------------------------------------- |
-| Production branch    | `main`                                                |
-| Pages source         | GitHub Actions                                        |
-| Build command        | `npm run build`                                       |
-| Publish directory    | `dist`                                                |
-| Node.js version      | 22.12 or newer                                        |
-| Environment variable | `SITE_URL=https://rdyu-cm.github.io/personal-website` |
-| Environment          | `github-pages`                                        |
+| Setting              | Value                                |
+| -------------------- | ------------------------------------ |
+| Repository name      | `rdyu-cm.github.io`                  |
+| Production branch    | `main`                               |
+| Pages source         | GitHub Actions                       |
+| Build command        | `npm run build`                      |
+| Publish directory    | `dist`                               |
+| Node.js version      | 22.12 or newer                       |
+| Environment variable | `SITE_URL=https://rdyu-cm.github.io` |
+| Environment          | `github-pages`                       |
 
 Set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**
 once; the workflow needs no other repository configuration, tokens, or secrets.
@@ -99,10 +106,21 @@ credentials or tokens.
 
 ## Custom-domain handoff
 
-`SITE_URL` controls Astro’s canonical `site` and deployment base. The project
-URL includes the `/personal-website` repository path, which Astro derives into
-`base`. For a future root-domain deployment, use the final HTTPS origin without
-a path:
+`SITE_URL` controls Astro’s canonical `site` and deployment base. Astro
+derives `base` from the URL path, so any path segment would prefix every asset
+and link. The site is a GitHub Pages user site served from the domain root, so
+the repository must be named `rdyu-cm.github.io`; any other repository name
+publishes under `/<repository>` and breaks the root-relative paths. With
+`SITE_URL=https://rdyu-cm.github.io` the derived `base` is empty.
+
+The former project URL `https://rdyu-cm.github.io/personal-website` was given
+out before the move, so `public/personal-website/index.html` is a static,
+`noindex` redirect to the root that preserves any `#fragment`. Keep it as long
+as old links may still circulate; it is excluded from Prettier so its markup
+stays exactly as written. It hardcodes the target origin, so update it too if
+the site moves again.
+
+For a future custom domain, use the final HTTPS origin, also without a path:
 
 ```bash
 SITE_URL=https://research.example.com npm run build
@@ -142,7 +160,8 @@ Inspect the production output for:
 - `sitemap-index.xml`, `robots.txt`, and `404.html`.
 - Correct canonical URLs and structured data.
 - Absolute Open Graph and Twitter image URLs.
-- Base-prefixed static asset paths under `/personal-website/`.
+- Root-relative static asset paths (`/_astro/…`, `/favicon.svg`) with no
+  repository path prefix.
 - One `<loc>` in `sitemap-0.xml`, since the site is a single page.
 - No `/cv` page, résumé PDF, phone number, credentials, or private material.
 

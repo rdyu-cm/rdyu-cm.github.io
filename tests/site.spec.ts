@@ -54,18 +54,96 @@ test.describe("accessibility regression checks", () => {
   });
 });
 
-test("shared shell exposes page landmarks without a navigation chrome", async ({
+test("shared shell exposes page landmarks and a single in-page navigation", async ({
   page,
 }) => {
   await page.goto("/");
 
   await expect(page.getByRole("main")).toBeVisible();
   await expect(page.getByRole("contentinfo")).toBeVisible();
-  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await expect(page.getByRole("navigation")).toHaveCount(1);
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
     "href",
     "/favicon.svg",
   );
+});
+
+test("section navigation anchors resolve to rendered sections", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const navLinks = page
+    .getByRole("navigation", { name: "Page sections" })
+    .getByRole("link");
+  await expect(navLinks).toHaveText([
+    "About",
+    "News",
+    "Publications",
+    "Research",
+  ]);
+  for (let index = 0; index < (await navLinks.count()); index += 1) {
+    const link = navLinks.nth(index);
+    const href = await link.getAttribute("href");
+    expect(href).toMatch(/^#[a-z]+$/);
+    const section = page.locator(`section${href}`);
+    await expect(section).toHaveCount(1);
+    await expect(
+      section.getByRole("heading", { level: 2, name: await link.innerText() }),
+    ).toBeVisible();
+  }
+});
+
+test("news lists the seeded items newest first", async ({ page }) => {
+  await page.goto("/");
+
+  const items = page.getByRole("list", { name: "News" }).getByRole("listitem");
+  await expect(items).toHaveCount(3);
+  await expect(items.locator("time")).toHaveText([
+    "Jun 2026",
+    "2026",
+    "Dec 2024",
+  ]);
+  await expect(items.nth(0)).toContainText("Rotskoff Lab");
+  await expect(items.nth(1)).toContainText("published in PNAS");
+  await expect(items.nth(1).getByRole("link")).toHaveAttribute(
+    "href",
+    "https://doi.org/10.1073/pnas.2604658123",
+  );
+  await expect(items.nth(2)).toContainText("Fong Lab");
+});
+
+test("publications bold the owner and offer link chips", async ({ page }) => {
+  await page.goto("/");
+
+  const publication = page.locator(".publication-item").first();
+  await expect(publication.locator(".publication-authors strong")).toHaveText(
+    "Ryan D. Yu",
+  );
+  await expect(
+    publication.locator(".publication-title").getByRole("link"),
+  ).toHaveAttribute("href", "https://doi.org/10.1073/pnas.2604658123");
+  await expect(
+    publication
+      .locator(".link-chips")
+      .getByRole("link", { name: "DOI", exact: true }),
+  ).toHaveAttribute("href", "https://doi.org/10.1073/pnas.2604658123");
+  await expect(publication.locator(".publication-meta em")).toHaveText(
+    "Proceedings of the National Academy of Sciences",
+  );
+  await expect(publication.locator(".publication-meta")).not.toContainText(
+    "Published",
+  );
+});
+
+test("the former project URL redirects to the root site", async ({ page }) => {
+  const response = await page.request.get("/personal-website/index.html");
+  expect(response.status()).toBe(200);
+  const html = await response.text();
+  expect(html).toContain(
+    '<meta http-equiv="refresh" content="0; url=https://rdyu-cm.github.io/" />',
+  );
+  expect(html).toContain('<meta name="robots" content="noindex" />');
 });
 
 test("shared SEO exposes the light theme and social preview", async ({
@@ -176,7 +254,7 @@ test("the single page presents identity, about, research, and publications", asy
     "California Institute of Technology",
   );
 
-  for (const section of ["About", "Research", "Publications & Presentations"]) {
+  for (const section of ["About", "News", "Publications", "Research"]) {
     await expect(
       page.getByRole("heading", { level: 2, name: section }),
     ).toBeVisible();
@@ -190,19 +268,24 @@ test("the single page presents identity, about, research, and publications", asy
     await expect(affiliations.filter({ hasText: lab })).toHaveCount(1);
   }
 
+  const publicationList = page.getByRole("list", {
+    name: "Publications and presentations",
+  });
   await expect(
-    page.getByText(
+    publicationList.getByText(
       "The Mechanism for Ligand Activation of the Smoothened G Protein-Coupled Receptor",
       { exact: true },
     ),
   ).toBeVisible();
   await expect(
-    page.getByText(
+    publicationList.getByText(
       "Ryan D. Yu, Amy-Doan P. Vo, Soo-Kyung Kim, William A. Goddard III",
       { exact: true },
     ),
   ).toBeVisible();
-  await expect(page.locator("time[datetime='2026']")).toHaveText("2026");
+  await expect(publicationList.locator("time[datetime='2026']")).toHaveText(
+    "2026",
+  );
   await expect(page.getByText(/\bdraft\b/i)).toHaveCount(0);
 });
 
@@ -240,6 +323,12 @@ test("external scholarship links resolve to their sources", async ({
   await expect(
     page.getByRole("link", { name: "Ryan Yu on GitHub", exact: true }),
   ).toHaveAttribute("href", "https://github.com/rdyu-cm");
+  await expect(
+    page.getByRole("link", { name: "Ryan Yu on Google Scholar", exact: true }),
+  ).toHaveAttribute(
+    "href",
+    "https://scholar.google.com/citations?user=ycuWxs4AAAAJ",
+  );
 });
 
 test("structured data covers the person and the published article", async ({

@@ -1,0 +1,59 @@
+---
+import type { NewsItem } from "../data/news";
+import { formatBehavioralDate } from "../lib/dates";
+
+export interface Props {
+  items: NewsItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<ul class="news-list" aria-label="News">
+  {
+    items.map((item) => {
+      const formattedDate = formatBehavioralDate(
+        item.date,
+        item.datePrecision,
+        "short",
+      );
+
+      return (
+        <li class="news-item">
+          <time class="news-item__date" datetime={formattedDate.datetime}>
+            {formattedDate.visible}
+          </time>
+          <p class="news-item__text">
+            {item.href ? <a href={item.href}>{item.text}</a> : item.text}
+          </p>
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .news-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .news-item {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: var(--space-s);
+    align-items: baseline;
+  }
+
+  .news-item + .news-item {
+    margin-block-start: var(--space-2xs);
+  }
+
+  .news-item__date {
+    color: var(--ink-muted);
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+</style>

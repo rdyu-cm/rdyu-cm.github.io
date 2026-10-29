@@ -39,12 +39,13 @@ describe("buildPersonJsonLd", () => {
       "@context": "https://schema.org",
       "@type": "Person",
       name: "Ryan Yu",
-      url: "https://rdyu-cm.github.io/personal-website",
+      url: "https://rdyu-cm.github.io",
       affiliation: {
         "@type": "Organization",
         name: "California Institute of Technology",
       },
       sameAs: [
+        "https://scholar.google.com/citations?user=ycuWxs4AAAAJ",
         "https://github.com/rdyu-cm",
         "https://www.linkedin.com/in/ryan-yu-0bb27a23b",
       ],

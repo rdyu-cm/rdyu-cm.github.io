@@ -47,19 +47,25 @@ describe("resolveSocialImage", () => {
   test.each([
     [
       "/images/social-card.png",
-      "https://rdyu-cm.github.io/personal-website/images/social-card.png",
+      "https://rdyu-cm.github.io/images/social-card.png",
     ],
     [
       "images/social-card.png",
-      "https://rdyu-cm.github.io/personal-website/images/social-card.png",
+      "https://rdyu-cm.github.io/images/social-card.png",
     ],
-  ])("resolves GitHub Pages site-local path %s", (image, expected) => {
+  ])("resolves GitHub Pages user-site path %s", (image, expected) => {
+    expect(resolveSocialImage(image, "https://rdyu-cm.github.io", "/")).toBe(
+      expected,
+    );
+  });
+
+  test("resolves a base-prefixed project-site path", () => {
     expect(
       resolveSocialImage(
-        image,
-        "https://rdyu-cm.github.io/personal-website",
-        "/personal-website/",
+        "/images/social-card.png",
+        "https://example.github.io/project",
+        "/project/",
       ),
-    ).toBe(expected);
+    ).toBe("https://example.github.io/project/images/social-card.png");
   });
 });

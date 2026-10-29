@@ -1,10 +1,14 @@
 ---
 import { getCollection, render } from "astro:content";
 
+import NewsList from "../components/NewsList.astro";
 import PublicationList from "../components/PublicationList.astro";
 import ResearchList from "../components/ResearchList.astro";
+import { news } from "../data/news";
 import { profile } from "../data/profile";
+import { contactLinkLabel } from "../lib/contact";
 import { filterPublicEntries, sortByDateDescending } from "../lib/content";
+import { sortNewsDescending } from "../lib/news";
 import {
   buildPersonJsonLd,
   buildScholarlyArticleJsonLd,
@@ -18,10 +22,22 @@ const research = sortByDateDescending(
 const publications = sortByDateDescending(
   filterPublicEntries(await getCollection("publications")),
 );
+const newsItems = sortNewsDescending(news);
 
 const [about] = await getCollection("about");
 if (!about) throw new Error("Expected src/content/about/about.md");
 const { Content: AboutContent } = await render(about);
+
+const sections = [
+  { id: "about", label: "About", visible: true },
+  { id: "news", label: "News", visible: newsItems.length > 0 },
+  {
+    id: "publications",
+    label: "Publications",
+    visible: publications.length > 0,
+  },
+  { id: "research", label: "Research", visible: research.length > 0 },
+].filter((section) => section.visible);
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const personJsonLd = buildPersonJsonLd(profile, canonical.toString());
@@ -49,7 +65,7 @@ const scholarlyJsonLd = publications.flatMap((publication) => {
         {
           profile.affiliation && (
             <>
-              <span aria-hidden="true"> · </span>
+              <br />
               {profile.affiliation}
             </>
           )
@@ -61,11 +77,7 @@ const scholarlyJsonLd = publications.flatMap((publication) => {
             <li>
               <a
                 href={link.href}
-                aria-label={
-                  link.label === "Email"
-                    ? `Email ${profile.name}`
-                    : `${profile.name} on ${link.label}`
-                }
+                aria-label={contactLinkLabel(link.label, profile.name)}
               >
                 {link.label}
               </a>
@@ -73,17 +85,43 @@ const scholarlyJsonLd = publications.flatMap((publication) => {
           ))
         }
       </ul>
+      <nav class="section-nav" aria-label="Page sections">
+        <ul>
+          {
+            sections.map((section) => (
+              <li>
+                <a href={`#${section.id}`}>{section.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
     </header>
 
-    <section class="section" aria-labelledby="about-title">
+    <section id="about" class="section" aria-labelledby="about-title">
       <h2 id="about-title">About</h2>
       <div class="section__body prose"><AboutContent /></div>
     </section>
 
     {
+      newsItems.length > 0 && (
+        <section id="news" class="section" aria-labelledby="news-title">
+          <h2 id="news-title">News</h2>
+          <div class="section__body">
+            <NewsList items={newsItems} />
+          </div>
+        </section>
+      )
+    }
+
+    {
       publications.length > 0 && (
-        <section class="section" aria-labelledby="publications-title">
-          <h2 id="publications-title">Publications &amp; Presentations</h2>
+        <section
+          id="publications"
+          class="section"
+          aria-labelledby="publications-title"
+        >
+          <h2 id="publications-title">Publications</h2>
           <div class="section__body">
             <PublicationList publications={publications} />
           </div>
@@ -93,7 +131,7 @@ const scholarlyJsonLd = publications.flatMap((publication) => {
 
     {
       research.length > 0 && (
-        <section class="section" aria-labelledby="research-title">
+        <section id="research" class="section" aria-labelledby="research-title">
           <h2 id="research-title">Research</h2>
           <div class="section__body">
             <ResearchList research={research} />
@@ -119,21 +157,44 @@ const scholarlyJsonLd = publications.flatMap((publication) => {
     line-height: 1.4;
   }
 
-  .identity__links {
+  .identity__links,
+  .section-nav ul {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2xs) var(--space-m);
-    margin: var(--space-m) 0 0;
+    margin: 0;
     padding: 0;
     font-size: var(--step--1);
     list-style: none;
   }
 
+  .identity__links {
+    margin-block-start: var(--space-m);
+  }
+
+  .section-nav {
+    margin-block-start: var(--space-m);
+    padding-block: var(--space-xs);
+    border-block: 1px solid var(--border);
+  }
+
+  .section-nav a {
+    color: var(--ink);
+    font-weight: 560;
+    text-decoration: none;
+  }
+
+  .section-nav a:hover {
+    color: var(--accent-strong);
+    text-decoration: underline;
+  }
+
   .section {
-    margin-block-start: var(--space-xl);
+    margin-block-start: var(--space-l);
+    scroll-margin-block-start: var(--space-m);
   }
 
   .section__body {
-    margin-block-start: var(--space-m);
+    margin-block-start: var(--space-s);
   }
 </style>

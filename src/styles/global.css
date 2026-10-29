@@ -140,6 +140,30 @@ a:hover {
   max-width: var(--prose-width);
 }
 
+/* Small outlined link buttons shared by publication and research entries. */
+.link-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin: var(--space-2xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link-chips a {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  font-size: var(--step--1);
+  line-height: 1.7;
+  text-decoration: none;
+}
+
+.link-chips a:hover {
+  border-color: var(--accent);
+}
+
 .skip-link {
   position: fixed;
   inset-block-start: var(--space-s);

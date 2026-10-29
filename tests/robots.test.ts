@@ -5,8 +5,8 @@ import { GET } from "../src/pages/robots.txt";
 describe("robots.txt", () => {
   test.each([
     [
-      "https://rdyu-cm.github.io/personal-website",
-      "https://rdyu-cm.github.io/personal-website/sitemap-index.xml",
+      "https://rdyu-cm.github.io",
+      "https://rdyu-cm.github.io/sitemap-index.xml",
     ],
     [
       "https://research.example.com",

@@ -1,6 +1,10 @@
 export type DatePrecision = "year" | "month" | "day";
 
-export const formatBehavioralDate = (date: Date, precision: DatePrecision) => {
+export const formatBehavioralDate = (
+  date: Date,
+  precision: DatePrecision,
+  monthStyle: "long" | "short" = "long",
+) => {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const day = date.getUTCDate();
@@ -15,7 +19,7 @@ export const formatBehavioralDate = (date: Date, precision: DatePrecision) => {
     timeZone: "UTC",
     year: "numeric",
   };
-  if (precision !== "year") options.month = "long";
+  if (precision !== "year") options.month = monthStyle;
   if (precision === "day") options.day = "numeric";
 
   return {

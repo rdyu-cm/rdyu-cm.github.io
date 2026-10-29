@@ -26,14 +26,33 @@ describe("public repository operations", () => {
     expect(published).toEqual([
       ".nojekyll",
       "favicon.svg",
+      "personal-website",
+      "personal-website/index.html",
       "social-preview.png",
     ]);
+  });
+
+  test("redirects the former project URL to the root site", () => {
+    const redirect = read("public/personal-website/index.html");
+
+    expect(redirect).toContain(
+      '<meta http-equiv="refresh" content="0; url=https://rdyu-cm.github.io/" />',
+    );
+    expect(redirect).toContain(
+      '<link rel="canonical" href="https://rdyu-cm.github.io/" />',
+    );
+    expect(redirect).toContain('<meta name="robots" content="noindex" />');
+    expect(redirect).toContain(
+      'location.replace("https://rdyu-cm.github.io/" + location.hash)',
+    );
+    expect(redirect).toContain('<a href="https://rdyu-cm.github.io/">');
   });
 
   test("keeps the README outward facing", () => {
     const readme = read("README.md");
 
-    expect(readme).toContain("https://rdyu-cm.github.io/personal-website");
+    expect(readme).toContain("https://rdyu-cm.github.io");
+    expect(readme).not.toContain("personal-website");
     expect(readme).not.toMatch(/npm (ci|run)/);
     expect(readme).not.toContain(".github/workflows/ci.yml");
   });
@@ -42,7 +61,10 @@ describe("public repository operations", () => {
     const guide = read("docs/MAINTAINING.md");
 
     expect(guide).toContain("deployed to GitHub Pages");
-    expect(guide).toContain("https://rdyu-cm.github.io/personal-website");
+    expect(guide).toContain(
+      "The canonical public URL is `https://rdyu-cm.github.io`.",
+    );
+    expect(guide).toContain("`rdyu-cm.github.io`");
     expect(guide).toMatch(/Pushes to `main`\s+build and verify the site/);
     expect(guide).toContain(".github/workflows/ci.yml");
     expect(guide).not.toContain("src/pages/cv.astro");
@@ -80,9 +102,7 @@ describe("public repository operations", () => {
   test("publishes the verified build to GitHub Pages from CI", () => {
     const workflow = read(".github/workflows/ci.yml");
 
-    expect(workflow).toContain(
-      "SITE_URL: https://rdyu-cm.github.io/personal-website",
-    );
+    expect(workflow).toMatch(/^\s+SITE_URL: https:\/\/rdyu-cm\.github\.io$/m);
     expect(workflow).toContain("actions/upload-pages-artifact@");
     expect(workflow).toContain("actions/deploy-pages@");
     expect(workflow).toMatch(/deploy:\s+needs: verify/);
